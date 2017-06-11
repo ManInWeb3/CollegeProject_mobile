@@ -7,7 +7,6 @@ import {
   AppRegistry,
   StyleSheet,
   Text,
-  Button,
   View,
   ListView,
   TouchableHighlight,
@@ -16,50 +15,65 @@ import {
 } from 'react-native';
 
 import { StackNavigator } from 'react-navigation';
-var testsArray = [];
+
+// Some configs
+// Set addresses of API endpoints
 var TESTAPIURL = 'http://209.126.109.242:10980/api/v1/test/';
 var TESTLOGAPIURL = "http://209.126.109.242:10980/api/v1/testlog/bypin/";
 var MEDIAIURL = "http://209.126.109.242:10980/tests/static/media/";
 
+// Interface strings
+var LISTTITLE = "Tests list";
+var TESTTITLEpre = "Test PIN: ";
+var LOADING = "Loading ...";
+var NOTESTSHERE = "There are no tests.";
+var NOTESTLOGSSHERE = "There are no test logs in the test.";
+
+
+// Define screen to show list of tests
 class TestListScreen extends Component {
 
+
   static navigationOptions = ({ navigation }) => ({
-    title: "Tests list",
+    title: LISTTITLE,
   });
   
+// Set some variables to start working
   constructor(props) {
-    // console.log("constructor");
     super(props);
+    var testsArray = [];
     var dataSource = new ListView.DataSource({rowHasChanged:(r1,r2) => r1.guid != r2.guid});
     this.state = {
       dataSource: dataSource.cloneWithRows(testsArray),
-      title: "Tests list",
+      title: LISTTITLE,
       isLoading:true,
     }
   }
 
+// This method will be called when the app is loaded and ready
   componentDidMount() {
+  // Call function to fetch array tests' array from API and populate dataSource with gotten array
     this.getList(function(json){
       testsArray = json;
       this.setState ({
         dataSource:this.state.dataSource.cloneWithRows(testsArray),
-        isLoading:false
+        isLoading:false,
       })
     }.bind(this));   
   }
 
+// Function to get the list of options and transfer it to function callback  - anonymouse function will be defined late
   getList(callback) {
     fetch(TESTAPIURL)
       .then(response => response.json())
       .then(json => callback(json))
       .catch(error => console.log("error:"+error));
-   }
+  }
 
-
+// Define how to visualize 1 item of the list, also check if we're fetching the array then show Loading 
+// and define action (navigate) if you tach the item
   renderRow(rowData) {
-
     const { navigate } = this.props.navigation;
-
     return (
         <TouchableHighlight underlayColor='#dddddd' style={{height:55}} onPress={() => navigate('TestLog', { "pin_code": rowData.pin_code }) } >
           <View>
@@ -68,17 +82,24 @@ class TestListScreen extends Component {
           </View>
         </TouchableHighlight>
       );
-}
+  }
 
-   render() {
-    this.state.title = "Tests list";
-    var currentView = (this.state.isLoading) ? <Text style={{height: 100, backgroundColor: '#dddddd'}}> Loading ... </Text> : 
-        <ListView 
-          dataSource={this.state.dataSource} 
-          style={styles.news} 
-          renderRow={this.renderRow.bind(this)} 
-          enableEmptySections={true}
-        />
+// This function will be called to visualize the screen
+  render() {
+    this.state.title = LISTTITLE;
+  // Decision tree: if isLoading (getting data) show LOADING if gotten list is empty show NOTESTSHETE and else show ListView of gotten data  
+    var currentView = (this.state.isLoading) ? 
+          <Text style={{height: 100, backgroundColor: '#dddddd'}}> {LOADING} </Text> 
+          : 
+          (this.state.dataSource.getRowCount() == 0) ? 
+              <Text style={{height: 100, backgroundColor: '#dddddd'}}> {NOTESTSHERE} </Text> 
+              :
+              <ListView 
+                dataSource={this.state.dataSource} 
+                style={styles.news} 
+                renderRow={this.renderRow.bind(this)} 
+                enableEmptySections={true}
+              />
     return(
       <View style={styles.container}>
         <View style={styles.body}>
@@ -91,24 +112,25 @@ class TestListScreen extends Component {
 }
 
 
-
+// Screen to visualise list of test logs
 class TestLogScreen extends Component {
 
+// Define title of the screen
   static navigationOptions = ({ navigation }) => ({
-    title: `${navigation.state.params.pin_code}`,
+    title: TESTTITLEpre + `${navigation.state.params.pin_code}`,
   });
   
-
+// Set some variables to start working
   constructor(props) {
     super(props);
     var dataSource = new ListView.DataSource({rowHasChanged:(r1,r2) => r1.guid != r2.guid});
     this.state = {
       dataSource: dataSource.cloneWithRows(testsArray),
-      // title: `${navigation.state.params.pin_code}`,
       isLoading:true
     }
   }
 
+// This method will be called when the app is loaded and ready
   componentDidMount() {
     this.getList(function(json){
       testsArray = json;
@@ -119,6 +141,7 @@ class TestLogScreen extends Component {
     }.bind(this));   
   }
 
+// Function to get the list of options and transfer it to function callback - anonymouse function will be defined late
   getList(callback) {
     const { params } = this.props.navigation.state;
     fetch(TESTLOGAPIURL + params.pin_code + "/")
@@ -129,19 +152,17 @@ class TestLogScreen extends Component {
 
 
 
-
+// This function will be called to visualize the screen
    render() {
       const { params } = this.props.navigation.state;
-      pin_code = params.pin_code;
-
-      console.log("TestLog length:" + this.state.dataSource.getRowCount());
+      // Decide what to show message LOADING or There is no test logs or the list view with the data
       var currentView = (this.state.isLoading) ? 
-          <Text style={{height: 40, backgroundColor: '#dddddd'}}> Loading ... </Text> 
+          <Text style={{height: 40, backgroundColor: '#dddddd'}}> {LOADING} </Text> 
           : 
-          (this.state.dataSource.getRowCount() > 0) ? 
+          (this.state.dataSource.getRowCount() == 0) ? 
+              <Text style={{height: 40, backgroundColor: '#dddddd'}}> {NOTESTLOGSSHERE} </Text>
+              :
               <ListView dataSource={this.state.dataSource} renderRow={this.renderRow.bind(this)} enableEmptySections={true}/> 
-              : 
-              <Text style={{height: 40, backgroundColor: '#dddddd'}}> There are no test logs in the test.</Text>
       return(
         <View>
         {currentView}
@@ -149,6 +170,7 @@ class TestLogScreen extends Component {
       );
   }
 
+// Define how to visualize 1 line (1 test log) of the list view
   renderRow(rowData) {
     const { navigate } = this.props.navigation;
     var screenshot = MEDIAIURL + rowData.screenshot.split("/").pop();
@@ -182,55 +204,24 @@ class TestLogScreen extends Component {
 
 }
 
+// Define routing of the app
 const ReactWTestClient = StackNavigator({
-  // Login: { screen: LoginScreen },
   TestList: { screen: TestListScreen },
   TestLog:  { screen: TestLogScreen },
 });
 
+// Register application and define wat to call to start the app
 AppRegistry.registerComponent('WTestApplication', () => ReactWTestClient);
 
-
+// Define styles for components of the app screens
 var styles = StyleSheet.create({
   container: {
     flex: 1
-  },
-  header: {
-    backgroundColor: '#FF6600',
-    padding: 10,
-    flex: 1,
-    justifyContent: 'space-between',
-    flexDirection: 'row'
   },
   body: {
     flex: 9,
     backgroundColor: '#F6F6EF'
   },
-  header_item: {
-  paddingLeft: 10,
-  paddingRight: 10,
-  justifyContent: 'center'
-  },
-  header_text: {
-    color: '#FFF',
-    fontWeight: 'bold',
-    fontSize: 15
-  },
-  button: {
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0'
-  },
-  news_item: {
-    paddingLeft: 10,
-    paddingRight: 10,
-    paddingTop: 15,
-    paddingBottom: 15,
-    marginBottom: 5
-  },
-  news_item_text: {
-    color: '#575757',
-    fontSize: 18
-  }
 });
 
 
