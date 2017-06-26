@@ -17,7 +17,7 @@ import {
 import { StackNavigator } from 'react-navigation';
 
 // Some configs
-// Set addresses of API endpoints
+// Set addresses of API endpoints and media files
 var TESTAPIURL = 'http://209.126.109.242:10980/api/v1/test/';
 var TESTLOGAPIURL = "http://209.126.109.242:10980/api/v1/testlog/bypin/";
 var MEDIAIURL = "http://209.126.109.242:10980/tests/static/media/";
@@ -33,12 +33,11 @@ var NOTESTLOGSSHERE = "There are no test logs in the test.";
 // Define screen to show list of tests
 class TestListScreen extends Component {
 
-
   static navigationOptions = ({ navigation }) => ({
     title: LISTTITLE,
   });
   
-// Set some variables to start working
+// Set some variables in the beginning
   constructor(props) {
     super(props);
     var testsArray = [];
@@ -67,7 +66,7 @@ class TestListScreen extends Component {
     fetch(TESTAPIURL)
       .then(response => response.json())
       .then(json => callback(json))
-      .catch(error => console.log("error:"+error));
+      .catch(error => console.log("connection error: "+error));
   }
 
 // Define how to visualize 1 item of the list, also check if we're fetching the array then show Loading 
@@ -120,7 +119,7 @@ class TestLogScreen extends Component {
     title: TESTTITLEpre + `${navigation.state.params.pin_code}`,
   });
   
-// Set some variables to start working
+// Set some variables in the begining
   constructor(props) {
     super(props);
     var dataSource = new ListView.DataSource({rowHasChanged:(r1,r2) => r1.guid != r2.guid});
@@ -204,7 +203,7 @@ class TestLogScreen extends Component {
 
 }
 
-// Define routing of the app
+// Define routing of the app and connect screens
 const ReactWTestClient = StackNavigator({
   TestList: { screen: TestListScreen },
   TestLog:  { screen: TestLogScreen },
